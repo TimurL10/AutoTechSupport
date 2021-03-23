@@ -1,0 +1,1 @@
+﻿Executed OfflineHoursCount Hours_Offline > 48 Device id = 5030, Device Hours offline =  3464|=====================================|  23.03.2021 22:48:56
