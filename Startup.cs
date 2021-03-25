@@ -46,6 +46,8 @@ namespace AutoTechSupport
             services.AddHangfireServer();
             services.AddScoped<IDeviceRepository, DeviceRepository>();
             services.AddScoped<IDevice, Device>();
+            services.AddScoped<IMarket, Market>();
+            services.AddScoped<IMarketRepository, MarketRepository>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -72,7 +74,7 @@ namespace AutoTechSupport
             {
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Device}/{action=Index}/{id?}");
+                    pattern: "{controller=Market}/{action=Index}/{id?}");
             });
 
             BackgroundJob.Enqueue(() => serviceProvider.GetService<IHangfireJobScheduler>().ScheduleRecurringJobs());
