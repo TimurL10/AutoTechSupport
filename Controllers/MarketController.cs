@@ -20,7 +20,6 @@ namespace AutoTechSupport.Controllers
         // GET: MarketController
         public ActionResult Index()
         {           
-            _market.InsertNewMarkets();
             _market.UpdateCurrentListOfMarkets();
             var markets = _market.GetSavedMarkets();
             return View(markets);
@@ -28,8 +27,7 @@ namespace AutoTechSupport.Controllers
             
         public void GetReport()
         {
-            //var markets = _repository.GetNewMarkets();
-
+            _market.UpdateCurrentListOfMarkets();
         }
     }
 }

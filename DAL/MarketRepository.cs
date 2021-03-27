@@ -42,7 +42,7 @@ namespace AutoTechSupport.DAL
         {
             using (IDbConnection connection = Connection)
             {
-                return connection.Query<Market>("Select * from MarketsActivity").ToList();
+                return connection.Query<Market>("Select * from MarketsActivity Order by TimeStamp").ToList();
             }
         }
         public void UpdateMarkets(Market market)

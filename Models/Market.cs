@@ -8,9 +8,10 @@ namespace AutoTechSupport.Models
 {
     public class Market : IMarket
     {
-        DateTime timeStamp;
+        DateTimeOffset timeStamp;
         DateTimeOffset stockDate;
         IMarketRepository _marketRepository;
+        List<Market> Week1;
 
         public Market() { }
         public Market(Guid storeId, string storeName, string netName, string softwareName, DateTimeOffset stockDate, bool activeFl, bool reserveFl, bool stocksFl)
@@ -37,7 +38,7 @@ namespace AutoTechSupport.Models
         public bool ActiveFl { get; set; }
         public bool ReserveFl { get; set; }
         public bool StocksFl { get; set; }
-        public DateTime TimeStamp
+        public DateTimeOffset TimeStamp
         {
 
             get
@@ -52,7 +53,7 @@ namespace AutoTechSupport.Models
 
         public void InsertNewMarkets()
         {
-            var noStockMarkets = _marketRepository.GetNewMarkets();
+            var noStockMarkets = _marketRepository.GetNewMarkets(); // заменить на локальную переменную List вместо var
             var savedMarkets = _marketRepository.GetSavedMarkets();
             if (savedMarkets.Count == 0)
             {
@@ -65,28 +66,27 @@ namespace AutoTechSupport.Models
                     _marketRepository.InsertMarkets(m);
                 }
             }
-
-            var newMarkets = noStockMarkets.Concat(savedMarkets).GroupBy(n => n.StoreId).
-            Where(n => n.Count() == 1).Select(n => n.FirstOrDefault()).ToList();
-            if (newMarkets.Count > 0)
-            {
-                foreach (var m in newMarkets)
-                {
-                    if (m.ReserveFl == false && m.ActiveFl == false && m.StocksFl == true)
-                        m.Status = "in work";
-                    m.Reason = "tech prbl";
-                    _marketRepository.InsertMarkets(m);
-                }
-            }
+            //var newMarkets = noStockMarkets.Concat(savedMarkets).GroupBy(n => n.StoreId).
+            //Where(n => n.Count() == 1).Select(n => n.FirstOrDefault()).ToList();
+            //if (newMarkets.Count > 0)
+            //{
+            //    foreach (var m in newMarkets)
+            //    {
+            //        if (m.ReserveFl == false && m.ActiveFl == false && m.StocksFl == true)
+            //            m.Status = "in work";
+            //        m.Reason = "tech prbl";
+            //        _marketRepository.InsertMarkets(m);
+            //    }
+            //}
         }
         public void UpdateCurrentListOfMarkets()
         {
-            var noStockMarkets = _marketRepository.GetNewMarkets();
-            var savedMarkets = _marketRepository.GetSavedMarkets();
+            var noStockMarkets = _marketRepository.GetNewMarkets(); // заменить на локальную переменную List вместо var
+            var savedMarkets = _marketRepository.GetSavedMarkets(); 
             if (savedMarkets.Count == 0)
                 InsertNewMarkets();
 
-            for (var i = 0; i < savedMarkets.Count; i++)
+            for (var i = 0; i < savedMarkets.Count; i++) 
             {
                 for (var j = 0; j < noStockMarkets.Count; j++)
                 {
@@ -125,6 +125,30 @@ namespace AutoTechSupport.Models
         public List<Market> GetSavedMarkets()
         {
             return _marketRepository.GetSavedMarkets();
+        }
+        public void AggWeekListOfMarkets()
+        {
+            var savedMarkets = _marketRepository.GetSavedMarkets();
+            for (int i = 0; i < savedMarkets.Count - 1; i ++)
+            {
+                if (savedMarkets[i] == savedMarkets[i + 1])
+                    Week1.Add(savedMarkets[i]);
+                else
+                {
+                    BuildExcelReport(Week1);
+                    Week1.Clear();
+                }
+                    
+                    
+            }
+
+                
+
+        }
+
+        public void BuildExcelReport(List<Market> week1)
+        {
+
         }
     }
 }
