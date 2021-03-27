@@ -23,7 +23,7 @@ namespace AutoTechSupport.Controllers
             _market.InsertNewMarkets();
             _market.UpdateCurrentListOfMarkets();
             var markets = _market.GetSavedMarkets();
-            return View();
+            return View(markets);
         }         
             
         public void GetReport()
