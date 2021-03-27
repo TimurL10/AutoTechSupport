@@ -22,6 +22,7 @@ namespace AutoTechSupport.Jobs
 
         }
 
+        [JobDisplayName("RunJobLocalWriteWord")]
         public async Task RunMarketsReport(DateTime now)
         {
              Debug.WriteLine("===HERE===");

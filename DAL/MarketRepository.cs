@@ -15,14 +15,20 @@ namespace AutoTechSupport.DAL
     public class MarketRepository : IMarketRepository
     {
         private string _configuration;
+        private string _configurationAzure;
         public MarketRepository(IConfiguration configuration)
         {
             _configuration = configuration.GetValue<string>("DBInfo:ConnectionString");
+            _configurationAzure = configuration.GetValue<string>("DataBaseAzureInfo:ConnectionString");
         }
 
         internal IDbConnection Connection
         {
             get { return new SqlConnection(_configuration); }
+        }
+        internal IDbConnection ConnectionAzure
+        {
+            get { return new SqlConnection(_configurationAzure); }
         }
 
         public void InsertMarkets(Market market)
@@ -60,7 +66,7 @@ namespace AutoTechSupport.DAL
             //}
 
             List<Market> markets = new List<Market>();
-            using (IDbConnection connection = Connection)
+            using (IDbConnection connection = ConnectionAzure)
             {
                 string spName = "[Monitoring].[GetOffStoresFromSite]";
 
