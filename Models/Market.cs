@@ -1,6 +1,8 @@
 ﻿using AutoTechSupport.Services;
+using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -12,6 +14,8 @@ namespace AutoTechSupport.Models
         DateTimeOffset stockDate;
         IMarketRepository _marketRepository;
         List<Market> Week1;
+        List<string> NetsList;
+        List<Day> DaysList = new List<Day>();
 
         public Market() { }
         public Market(Guid storeId, string storeName, string netName, string softwareName, DateTimeOffset stockDate, bool activeFl, bool reserveFl, bool stocksFl)
@@ -91,18 +95,13 @@ namespace AutoTechSupport.Models
                 for (var j = 0; j < noStockMarkets.Count; j++)
                 {
                     // ищем магазины которые есть в обоих списках но ts новее и добавляем его с новой датой
-                    if (savedMarkets[i].StoreId == noStockMarkets[j].StoreId && savedMarkets[i].TimeStamp.Day != noStockMarkets[j].TimeStamp.Day)
+                    if (savedMarkets[i].StoreId == noStockMarkets[j].StoreId && savedMarkets[i].TimeStamp.DayOfWeek!= noStockMarkets[j].TimeStamp.DayOfWeek)
                     {
                         savedMarkets[i].TimeStamp = DateTime.Now;
                         _marketRepository.InsertMarkets(savedMarkets[i]);
                         break;
-                    }
-                    // ищем магазины которые есть в обоих списках с одинаковой датой и пропускаем его
-                    else if (savedMarkets[i].StoreId == noStockMarkets[j].StoreId && savedMarkets[i].TimeStamp.Day == noStockMarkets[j].TimeStamp.Day)
-                    {
-                        break;
-                    }
-                    // ищем новые магазины в старом листе и ксли их нет добавляем
+                    }                    
+                    // ищем новые магазины в старом листе и если их нет добавляем
                     var newMarket = savedMarkets.Select(m => m.StoreId).Contains(noStockMarkets[j].StoreId);
                     if (!newMarket)
                         _marketRepository.InsertMarkets(savedMarkets[i]);
@@ -129,26 +128,62 @@ namespace AutoTechSupport.Models
         public void AggWeekListOfMarkets()
         {
             var savedMarkets = _marketRepository.GetSavedMarkets();
-            for (int i = 0; i < savedMarkets.Count - 1; i ++)
+            NetsList = savedMarkets.Select(m => m.NetName).Distinct().ToList();
+
+            var MarketsCount = from m in savedMarkets group m by m.NetName into grp select new { NetName, cnt = grp.Count(), key = grp.Key, TimeStamp, Reason, Status };
+
+            foreach (var m in MarketsCount)
             {
-                if (savedMarkets[i] == savedMarkets[i + 1])
-                    Week1.Add(savedMarkets[i]);
-                else
-                {
-                    BuildExcelReport(Week1);
-                    Week1.Clear();
-                }
-                    
-                    
+                Day day = new Day(m.NetName, m.cnt, m.TimeStamp.Day, m.Reason, m.Status);
+                DaysList.Add(day);
             }
-
-                
-
+                        
         }
-
         public void BuildExcelReport(List<Market> week1)
-        {
+        {            
+            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+            using (ExcelPackage excel = new ExcelPackage())
+            {
+                ExcelWorksheet worksheet = excel.Workbook.Worksheets.Add("Sheet 1");
 
+                worksheet.Cells["A1"].Value = "АС";
+                worksheet.Cells["B1"].Value = "МНН";
+
+
+                DataTable dataTable = new DataTable();
+                for (int i = 0; week1.Count > 0; i++)
+                    for (int j = 0; j < 28; j++)
+                    {
+
+                    }
+                   
+                //add three colums to the datatable
+                dataTable.Columns.Add("ID", typeof(int));
+                dataTable.Columns.Add("Type", typeof(string));
+                dataTable.Columns.Add("Name", typeof(string));
+
+                //add some rows
+                dataTable.Rows.Add(0, "Country", "Netherlands");
+                dataTable.Rows.Add(1, "Country", "Japan");
+
+                worksheet.Cells["A1"].LoadFromDataTable(dataTable, true);
+            }
+                    
+                //var root = System.IO.Path.GetDirectoryName(pricePath);
+                //string subdir = @$"{root}\Reports";
+                //Directory.CreateDirectory(subdir);
+                //System.IO.Path.Combine(root, "Reports");
+
+                //FileInfo excelFile = new FileInfo($@"{root}\Reports\{fileName}.xlsx");
+                //excel.SaveAs(excelFile);
+                //long totalMemory = GC.GetTotalMemory(false);
+
+                //GC.Collect(1, GCCollectionMode.Forced);
+                //GC.WaitForPendingFinalizers();         
+            
+            
         }
+
+
     }
 }

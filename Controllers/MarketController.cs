@@ -22,6 +22,7 @@ namespace AutoTechSupport.Controllers
         {           
             _market.UpdateCurrentListOfMarkets();
             var markets = _market.GetSavedMarkets();
+            _market.AggWeekListOfMarkets();
             return View(markets);
         }         
             

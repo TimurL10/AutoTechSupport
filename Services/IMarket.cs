@@ -12,5 +12,6 @@ namespace AutoTechSupport.Services
         void UpdateCurrentListOfMarkets();
         List<Market> GetSavedMarkets();
         List<Market> GetNewMarkets();
+        void AggWeekListOfMarkets();
     }
 }
