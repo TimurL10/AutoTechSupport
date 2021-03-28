@@ -3,6 +3,7 @@ using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -69,24 +70,12 @@ namespace AutoTechSupport.Models
                     m.Reason = "tech prbl";
                     _marketRepository.InsertMarkets(m);
                 }
-            }
-            //var newMarkets = noStockMarkets.Concat(savedMarkets).GroupBy(n => n.StoreId).
-            //Where(n => n.Count() == 1).Select(n => n.FirstOrDefault()).ToList();
-            //if (newMarkets.Count > 0)
-            //{
-            //    foreach (var m in newMarkets)
-            //    {
-            //        if (m.ReserveFl == false && m.ActiveFl == false && m.StocksFl == true)
-            //            m.Status = "in work";
-            //        m.Reason = "tech prbl";
-            //        _marketRepository.InsertMarkets(m);
-            //    }
-            //}
+            }           
         }
         public void UpdateCurrentListOfMarkets()
         {
-            var noStockMarkets = _marketRepository.GetNewMarkets(); // заменить на локальную переменную List вместо var
-            var savedMarkets = _marketRepository.GetSavedMarkets(); 
+            var noStockMarkets = _marketRepository.GetNewMarkets().ToList(); ; // заменить на локальную переменную List вместо var
+            var savedMarkets = _marketRepository.GetSavedMarkets().ToList(); 
             if (savedMarkets.Count == 0)
                 InsertNewMarkets();
 
@@ -94,17 +83,17 @@ namespace AutoTechSupport.Models
             {
                 for (var j = 0; j < noStockMarkets.Count; j++)
                 {
-                    // ищем магазины которые есть в обоих списках но ts новее и добавляем его с новой датой
-                    if (savedMarkets[i].StoreId == noStockMarkets[j].StoreId && savedMarkets[i].TimeStamp.DayOfWeek!= noStockMarkets[j].TimeStamp.DayOfWeek)
+                    //ищем магазины которые есть в обоих списках но ts новее и добавляем его с новой датой
+                    if (savedMarkets[i].StoreId == noStockMarkets[j].StoreId && savedMarkets[i].TimeStamp.DayOfWeek != noStockMarkets[j].TimeStamp.DayOfWeek)
                     {
                         savedMarkets[i].TimeStamp = DateTime.Now;
                         _marketRepository.InsertMarkets(savedMarkets[i]);
                         break;
-                    }                    
-                    // ищем новые магазины в старом листе и если их нет добавляем
+                    }
+                    //ищем новые магазины в старом листе и если их нет добавляем
                     var newMarket = savedMarkets.Select(m => m.StoreId).Contains(noStockMarkets[j].StoreId);
                     if (!newMarket)
-                        _marketRepository.InsertMarkets(savedMarkets[i]);
+                        _marketRepository.InsertMarkets(noStockMarkets[j]);
 
                 }
                 // ищем старые магазины в новом листе и если его уже нет и прошло <= 3 часа меняем статус
@@ -113,6 +102,7 @@ namespace AutoTechSupport.Models
                 {
                     savedMarkets[i].Status = "on-line";
                     savedMarkets[i].Reason = "> 24h";
+                    _marketRepository.UpdateMarkets(savedMarkets[i]);
                 }
             }
         }
@@ -127,17 +117,33 @@ namespace AutoTechSupport.Models
         }
         public void AggWeekListOfMarkets()
         {
+            List<Market> listByNet = new List<Market>();
             var savedMarkets = _marketRepository.GetSavedMarkets();
-            NetsList = savedMarkets.Select(m => m.NetName).Distinct().ToList();
+            //NetsList = savedMarkets.Select(m => m.NetName).Distinct().ToList();
+            var sortedMarkets = (from m in savedMarkets orderby m.TimeStamp, m.NetName select m).ToList();
 
-            var MarketsCount = from m in savedMarkets group m by m.NetName into grp select new { NetName, cnt = grp.Count(), key = grp.Key, TimeStamp, Reason, Status };
-
-            foreach (var m in MarketsCount)
+            for (int i = 0; i < sortedMarkets.Count - 1; i ++)
             {
-                Day day = new Day(m.NetName, m.cnt, m.TimeStamp.Day, m.Reason, m.Status);
-                DaysList.Add(day);
-            }
-                        
+                listByNet.Add(sortedMarkets[i]);
+                if (sortedMarkets[i].NetName != sortedMarkets[i + 1].NetName)
+                {
+                    var list = listByNet.GroupBy(x => x.Status).Select(g => new { Value = g.Key, Count = g.Count() }).OrderByDescending(x => x.Count).ToList();
+                    foreach (var a in list)
+                    {
+                        if (a.Value == "in work")
+                        {
+                            Day day = new Day(sortedMarkets[i].NetName, a.Count, 0, sortedMarkets[i].TimeStamp.Day, a.Value);
+                            DaysList.Add(day);
+                        }
+                        else if (a.Value == "on-line")
+                        {
+                            Day day = new Day(sortedMarkets[i].NetName, 0, a.Count, sortedMarkets[i].TimeStamp.Day, a.Value);
+                            DaysList.Add(day);
+                        }
+                    }
+                    listByNet.Clear();
+                }
+            }                        
         }
         public void BuildExcelReport(List<Market> week1)
         {            

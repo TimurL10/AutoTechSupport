@@ -5,22 +5,20 @@ using System.Threading.Tasks;
 
 namespace AutoTechSupport.Models
 {
-    public class Day
-    {
-        public Day(string net, int marketsCount, int dayOfWeek, string reasonName, string currentStatus)
+    public class Day : Market
+    { 
+        public Day(string netName, int inWorkStatusCount, int onlineStatusCount, int dayOfWeek, string reason)
         {
-            Net = net;
-            MarketsCount = marketsCount;
+            NetName = netName;
+            InWorkStatusCount = inWorkStatusCount;
+            OnlineStatusCount = onlineStatusCount;
             DayOfWeek = dayOfWeek;
-            ReasonName = reasonName;
-            CurrentStatus = currentStatus;
+            Reason = reason;
+            
         }
 
-        public string Net { get; set; }
-        public int MarketsCount { get; set; }
+        public int InWorkStatusCount { get; set; }
+        public int OnlineStatusCount { get; set; }
         public int DayOfWeek { get; set; }
-        public string ReasonName { get; set; }
-        public string CurrentStatus { get; set; }
-        
     }
 }
