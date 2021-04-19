@@ -19,11 +19,12 @@ namespace AutoTechSupport.Controllers
 
         // GET: MarketController
         public ActionResult Index()
-        {           
-            _market.UpdateCurrentListOfMarkets();
-            var markets = _market.GetSavedMarkets();
-            _market.AggWeekListOfMarkets();
-            return View(markets);
+        {
+            //_market.UpdateCurrentListOfMarkets();
+            //var markets = _market.GetSavedMarkets();
+            //_market.AggWeekListOfMarkets();
+            _market.SendMarketsToTelegramBot();
+            return View();
         }         
             
         public void GetReport()

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace AutoTechSupport.Models
@@ -19,7 +20,7 @@ namespace AutoTechSupport.Models
         List<Day> DaysList = new List<Day>();
 
         public Market() { }
-        public Market(Guid storeId, string storeName, string netName, string softwareName, DateTimeOffset stockDate, bool activeFl, bool reserveFl, bool stocksFl)
+        public Market(Guid storeId, string storeName, string netName, string softwareName, DateTimeOffset stockDate, bool activeFl, bool reserveFl, bool stocksFl, DateTime timeStamp)
         {
             StoreId = storeId;
             StoreName = storeName;
@@ -29,6 +30,7 @@ namespace AutoTechSupport.Models
             ActiveFl = activeFl;
             ReserveFl = reserveFl;
             StocksFl = stocksFl;
+            TimeStamp = timeStamp;
         }
         public Market(IMarketRepository marketRepository)
         {
@@ -43,16 +45,7 @@ namespace AutoTechSupport.Models
         public bool ActiveFl { get; set; }
         public bool ReserveFl { get; set; }
         public bool StocksFl { get; set; }
-        public DateTimeOffset TimeStamp
-        {
-
-            get
-            {
-                return timeStamp = DateTime.Now;
-            }
-            set => timeStamp = value;
-
-        }
+        public DateTimeOffset TimeStamp { get; set; }        
         public string Reason { get; set; }
         public string Status { get; set; }
 
@@ -78,13 +71,13 @@ namespace AutoTechSupport.Models
             var savedMarkets = _marketRepository.GetSavedMarkets().ToList(); 
             if (savedMarkets.Count == 0)
                 InsertNewMarkets();
-
-            for (var i = 0; i < savedMarkets.Count; i++) 
+                  
+            for (var i = 0; i < savedMarkets.Count; i ++) 
             {
-                for (var j = 0; j < noStockMarkets.Count; j++)
+                for (var j = 0; j < noStockMarkets.Count; j ++)
                 {
                     //ищем магазины которые есть в обоих списках но ts новее и добавляем его с новой датой
-                    if (savedMarkets[i].StoreId == noStockMarkets[j].StoreId && savedMarkets[i].TimeStamp.DayOfWeek != noStockMarkets[j].TimeStamp.DayOfWeek)
+                    if (savedMarkets[i].StoreId == noStockMarkets[j].StoreId && savedMarkets[i].TimeStamp.Day != noStockMarkets[j].TimeStamp.Day)
                     {
                         savedMarkets[i].TimeStamp = DateTime.Now;
                         _marketRepository.InsertMarkets(savedMarkets[i]);
@@ -94,10 +87,9 @@ namespace AutoTechSupport.Models
                     var newMarket = savedMarkets.Select(m => m.StoreId).Contains(noStockMarkets[j].StoreId);
                     if (!newMarket)
                         _marketRepository.InsertMarkets(noStockMarkets[j]);
-
                 }
-                // ищем старые магазины в новом листе и если его уже нет и прошло <= 3 часа меняем статус
-                var markeExist = noStockMarkets.Select(a => a.StoreId).Contains(savedMarkets[i].StoreId);
+                //ищем старые магазины в новом листе и если его уже нет и прошло <= 3 часа меняем статус
+               var markeExist = noStockMarkets.Select(a => a.StoreId).Contains(savedMarkets[i].StoreId);
                 if (!markeExist && savedMarkets[i].TimeStamp.Hour <= 3)
                 {
                     savedMarkets[i].Status = "on-line";
@@ -189,6 +181,40 @@ namespace AutoTechSupport.Models
             
             
         }
+        public List<Market> SortingByNet()
+        {
+            var listMarkets = _marketRepository.GetNewMarkets();
+            var list = listMarkets.Where(s => s.NetName == "ХАБАРОВСК - Астери").ToList();
+
+
+            return list;
+        }
+        public void SendMarketsToTelegramBot()
+        {
+            string dataToChat = "";
+            var list = SortingByNet();
+            for  (int i = 0; i < list.Count(); i ++)
+            {
+                dataToChat += list[i].StoreName + "; " + "Дата выгрузки осттаков: " + list[i].StockDate.ToString() + "\n";
+            }
+
+            var pairs = new List<KeyValuePair<string, string>>
+                {
+                    new KeyValuePair<string, string>( "chat_id", "-541844670" ),
+                    new KeyValuePair<string, string>( "text", dataToChat )
+                };
+            var content = new FormUrlEncodedContent(pairs);
+
+            using (var client = new HttpClient())
+            {
+                var response =
+                    client.PostAsync("https://api.telegram.org/bot1736378267:AAFevqGYytgSGAsPFjcMlXJDrCIBQ6XYZwA/sendMessage", content).Result;
+                var result = response.Content.ReadAsStringAsync().Result;
+                Debug.WriteLine(result);
+                
+            }
+        }
+
 
 
     }

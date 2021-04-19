@@ -101,7 +101,7 @@ namespace AutoTechSupport.DAL
                                     arrayList.Add(reader[i]);
                             }
                             Market market = new Market((Guid)arrayList[0], (string)arrayList[1], (string)arrayList[2],
-                                (string)arrayList[3], (DateTimeOffset)arrayList[4], (bool)arrayList[5], (bool)arrayList[6], (bool)arrayList[7]);
+                                (string)arrayList[3], (DateTimeOffset)arrayList[4], (bool)arrayList[5], (bool)arrayList[6], (bool)arrayList[7], DateTime.Now);
                             markets.Add(market);
                             arrayList.Clear();
                         }

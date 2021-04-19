@@ -41,7 +41,7 @@ namespace AutoTechSupport.Jobs
                 RecurringJob.RemoveIfExists(nameof(MyJob));
                 RecurringJob.AddOrUpdate<MyJob>(nameof(MyJob),
                     job => job.RunFirstJob(JobCancellationToken.Null),
-                    Cron.MinuteInterval(1), TimeZoneInfo.Utc);
+                    Cron.MinuteInterval(3), TimeZoneInfo.Utc);
             }
         }
 

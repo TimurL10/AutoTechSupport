@@ -13,5 +13,8 @@ namespace AutoTechSupport.Services
         List<Market> GetSavedMarkets();
         List<Market> GetNewMarkets();
         void AggWeekListOfMarkets();
+        List<Market> SortingByNet();
+        void SendMarketsToTelegramBot();
+
     }
 }
